@@ -1,5 +1,5 @@
 import cv2
-from pose_detector import PoseDetector
+from .pose_detector import PoseDetector
 
 class VideoProcessor:
 
