@@ -1,24 +1,38 @@
 from pathlib import Path
 from video_processor import VideoProcessor
+from pose_detector import PoseDetector
 
-# Percorso assoluto della cartella principale del progetto
+# Calcola la root del progetto (due livelli sopra visual_analyzer/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 VIDEO_PATH = PROJECT_ROOT / "videos" / "singer.mp4"
+MODEL_PATH = PROJECT_ROOT / "models" / "pose_landmarker_full.task"
 
-print("Video path:", VIDEO_PATH)
-print("File exists:", VIDEO_PATH.exists())
+def main():
+    print(f"Video: {VIDEO_PATH}")
+    print(f"Modello: {MODEL_PATH}")
 
-video = VideoProcessor(str(VIDEO_PATH))
+    # 1. Inizializza il rilevatore di pose
+    detector = PoseDetector(MODEL_PATH)
 
-print("\nVIDEO INFORMATION")
-print("-----------------")
+    try:
+        # 2. Inizializza il processore video passandogli il detector
+        processor = VideoProcessor(VIDEO_PATH, detector=detector)
+        
+        # Stampa info video
+        info = processor.get_info()
+        print(f"Video Info: {info['width']}x{info['height']} @ {info['fps']:.2f} fps | Durata: {info['duration']:.2f}s")
 
-for key, value in video.get_info().items():
-    print(f"{key}: {value}")
+        # 3. Elabora il video
+        results = processor.process_video()
 
-print("\nSTARTING VIDEO PROCESSING\n")
+        # 4. Riepilogo
+        valid_frames = [r for r in results if r["landmarks"] is not None]
+        print(f"\nRiepilogo: {len(valid_frames)} frame con posa rilevata su {len(results)} totali.")
 
-video.process_video()
+    finally:
+        # Assicurati di chiudere sempre il detector
+        detector.close()
 
-print("\nVIDEO PROCESSING COMPLETED")
+if __name__ == "__main__":
+    main()
